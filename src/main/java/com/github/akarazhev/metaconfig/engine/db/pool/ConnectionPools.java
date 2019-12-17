@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 import static com.github.akarazhev.metaconfig.Constants.CREATE_CONSTANT_CLASS_ERROR;
 import static com.github.akarazhev.metaconfig.Constants.Messages.CREATE_FACTORY_CLASS_ERROR;
+import static com.github.akarazhev.metaconfig.Constants.Messages.PARAM_NOT_PRESENTED;
 import static com.github.akarazhev.metaconfig.Constants.Messages.WRONG_CONFIG_NAME;
 import static com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPools.Settings.CONFIG_NAME;
 import static com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPools.Settings.PASSWORD;
@@ -52,15 +53,15 @@ public final class ConnectionPools {
         // The url key
         public static final String URL = "url";
         // The url value
-        static final String URL_VALUE = "jdbc:h2:./data/metacfg4j";
+        public static final String URL_VALUE = "jdbc:h2:./data/metacfg4j";
         // The user key
         public static final String USER = "user";
         // The user value
-        static final String USER_VALUE = "sa";
+        public static final String USER_VALUE = "sa";
         // The password key
         public static final String PASSWORD = "password";
         // The password value
-        static final String PASSWORD_VALUE = "sa";
+        public static final String PASSWORD_VALUE = "sa";
     }
 
     /**
@@ -84,9 +85,9 @@ public final class ConnectionPools {
         // Validate the config
         final Config poolConfig = Validator.of(config).
                 validate(c -> CONFIG_NAME.equals(c.getName()), WRONG_CONFIG_NAME).
-                validate(c -> c.getProperty(URL).isPresent(), "URL is not presented.").
-                validate(c -> c.getProperty(USER).isPresent(), "User is not presented.").
-                validate(c -> c.getProperty(PASSWORD).isPresent(), "Password is not presented.").
+                validate(c -> c.getProperty(URL).isPresent(), String.format(PARAM_NOT_PRESENTED, URL)).
+                validate(c -> c.getProperty(USER).isPresent(), String.format(PARAM_NOT_PRESENTED,  USER)).
+                validate(c -> c.getProperty(PASSWORD).isPresent(), String.format(PARAM_NOT_PRESENTED, PASSWORD)).
                 get();
         // Get the url
         final String url = poolConfig.getProperty(URL).
@@ -104,11 +105,17 @@ public final class ConnectionPools {
         return new ConnectionPool() {
             private final JdbcConnectionPool connectionPool = JdbcConnectionPool.create(url, user, password);
 
+            /**
+             * {@inheritDoc}
+             */
             @Override
             public void close() {
                 connectionPool.dispose();
             }
 
+            /**
+             * {@inheritDoc}
+             */
             @Override
             public DataSource getDataSource() {
                 return connectionPool;

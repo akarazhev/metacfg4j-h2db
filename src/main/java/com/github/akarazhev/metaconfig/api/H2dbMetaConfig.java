@@ -14,13 +14,12 @@ import com.github.akarazhev.metaconfig.engine.db.DbServer;
 import com.github.akarazhev.metaconfig.engine.db.DbServers;
 import com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPool;
 import com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPools;
-import com.github.akarazhev.metaconfig.engine.web.WebServer;
-import com.github.akarazhev.metaconfig.engine.web.WebServers;
 import com.github.akarazhev.metaconfig.extension.Validator;
 
 import javax.sql.DataSource;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -29,18 +28,15 @@ import static com.github.akarazhev.metaconfig.Constants.Messages.META_CONFIG_ERR
 /**
  * The core configuration class that provides the functionality.
  */
-public final class MetaConfig implements ConfigService, Closeable {
+public final class H2dbMetaConfig implements ConfigService, Closeable {
     private final DbServer dbServer;
-    private final WebServer webServer;
     private final ConnectionPool connectionPool;
-    private final ConfigService configService;
+    private final MetaConfig metaConfig;
 
-    private MetaConfig(final DbServer dbServer, final WebServer webServer, final ConnectionPool connectionPool,
-                       final ConfigService configService) {
+    private H2dbMetaConfig(final DbServer dbServer, final ConnectionPool connectionPool, final MetaConfig metaConfig) {
         this.dbServer = dbServer;
-        this.webServer = webServer;
         this.connectionPool = connectionPool;
-        this.configService = configService;
+        this.metaConfig = metaConfig;
     }
 
     /**
@@ -48,7 +44,7 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public Stream<Config> update(final Stream<Config> stream) {
-        return configService.update(stream);
+        return metaConfig.update(stream);
     }
 
     /**
@@ -56,7 +52,7 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public Stream<String> getNames() {
-        return configService.getNames();
+        return metaConfig.getNames();
     }
 
     /**
@@ -64,7 +60,7 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public Stream<Config> get() {
-        return configService.get();
+        return metaConfig.get();
     }
 
     /**
@@ -72,7 +68,7 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public Stream<Config> get(final Stream<String> stream) {
-        return configService.get(stream);
+        return metaConfig.get(stream);
     }
 
     /**
@@ -80,15 +76,15 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public int remove(final Stream<String> stream) {
-        return configService.remove(stream);
+        return metaConfig.remove(stream);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public void accept(final String name) {
-        configService.accept(name);
+    public void accept(final Stream<String> stream) {
+        metaConfig.accept(stream);
     }
 
     /**
@@ -96,7 +92,7 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public void addConsumer(final Consumer<Config> consumer) {
-        configService.addConsumer(consumer);
+        metaConfig.addConsumer(consumer);
     }
 
     /**
@@ -104,9 +100,9 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     @Override
     public void close() throws IOException {
-        // Stop the web server
-        if (webServer != null) {
-            webServer.stop();
+        // Stop the meta configuration
+        if (metaConfig != null) {
+            metaConfig.close();
         }
         // Close the connection pool
         if (connectionPool != null) {
@@ -123,17 +119,9 @@ public final class MetaConfig implements ConfigService, Closeable {
      */
     public final static class Builder {
         private Config dbConfig;
-        private Config webClient;
         private Config webConfig;
         private Config poolConfig;
-        private boolean isDefaultConfig;
-
-        /**
-         * The default constructor.
-         */
-        public Builder() {
-            this.isDefaultConfig = false;
-        }
+        private Map<String, String> dataMapping;
 
         /**
          * Constructs the core configuration class with the configuration of a db server.
@@ -143,28 +131,6 @@ public final class MetaConfig implements ConfigService, Closeable {
          */
         public Builder dbServer(final Config config) {
             this.dbConfig = Validator.of(config).get();
-            return this;
-        }
-
-        /**
-         * Constructs the core configuration class with the configuration of a web client.
-         *
-         * @param config a configuration a web client.
-         * @return a builder of the core configuration class.
-         */
-        public Builder webClient(final Config config) {
-            this.webClient = Validator.of(config).get();
-            return this;
-        }
-
-        /**
-         * Constructs the core configuration class with the configuration of a web server.
-         *
-         * @param config a configuration a web server.
-         * @return a builder of the core configuration class.
-         */
-        public Builder webServer(final Config config) {
-            this.webConfig = Validator.of(config).get();
             return this;
         }
 
@@ -180,12 +146,24 @@ public final class MetaConfig implements ConfigService, Closeable {
         }
 
         /**
-         * Constructs the core configuration with the default configuration.
+         * Constructs the core configuration class with the custom mapping.
          *
+         * @param mapping a table mapping.
          * @return a builder of the core configuration class.
          */
-        public Builder defaultConfig() {
-            this.isDefaultConfig = true;
+        public Builder dataMapping(final Map<String, String> mapping) {
+            this.dataMapping = Validator.of(mapping).get();
+            return this;
+        }
+
+        /**
+         * Constructs the core configuration class with the configuration of a web server.
+         *
+         * @param config a configuration a web server.
+         * @return a builder of the core configuration class.
+         */
+        public Builder webServer(final Config config) {
+            this.webConfig = Validator.of(config).get();
             return this;
         }
 
@@ -194,41 +172,24 @@ public final class MetaConfig implements ConfigService, Closeable {
          *
          * @return a builder of the core configuration class.
          */
-        public MetaConfig build() {
+        public H2dbMetaConfig build() {
             try {
-                DbServer dbServer = null;
-                ConnectionPool connectionPool = null;
-                WebServer webServer = null;
                 // Init the DB server
-                if (isDefaultConfig) {
-                    dbServer = DbServers.newServer().start();
-                } else if (dbConfig != null) {
-                    dbServer = DbServers.newServer(dbConfig).start();
-                }
-                // Init the data source
-                DataSource dataSource = null;
+                final DbServer dbServer = dbConfig != null ?
+                        DbServers.newServer(dbConfig).start() :
+                        DbServers.newServer().start();
                 // Init the connection pool and the data source
-                if (isDefaultConfig) {
-                    connectionPool = ConnectionPools.newPool();
-                    dataSource = connectionPool.getDataSource();
-                } else if (poolConfig != null) {
-                    connectionPool = ConnectionPools.newPool(poolConfig);
-                    dataSource = connectionPool.getDataSource();
-                }
-                // Init the repository
-                final ConfigRepository configRepository = dataSource != null ?
-                        new DbConfigRepository.Builder(dataSource).build() :
-                        new WebConfigRepository.Builder(webClient).build();
-                // Init the config service
-                final ConfigService configService = new ConfigServiceImpl.Builder(configRepository).build();
-                // Init the web server
-                if (isDefaultConfig) {
-                    webServer = WebServers.newServer(configService).start();
-                } else if (webConfig != null) {
-                    webServer = WebServers.newServer(webConfig, configService).start();
-                }
+                final ConnectionPool connectionPool = poolConfig != null ?
+                        ConnectionPools.newPool(poolConfig) :
+                        ConnectionPools.newPool();
+                final DataSource dataSource = connectionPool.getDataSource();
                 // Create the main instance
-                return new MetaConfig(dbServer, webServer, connectionPool, configService);
+                final MetaConfig metaConfig = new MetaConfig.Builder().
+                        webServer(webConfig).
+                        dataMapping(dataMapping).
+                        dataSource(dataSource).
+                        build();
+                return new H2dbMetaConfig(dbServer, connectionPool, metaConfig);
             } catch (final Exception e) {
                 throw new RuntimeException(META_CONFIG_ERROR, e);
             }
