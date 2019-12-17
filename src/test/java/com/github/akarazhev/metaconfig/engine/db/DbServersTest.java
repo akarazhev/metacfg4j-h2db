@@ -10,8 +10,46 @@
  * limitations under the License. */
 package com.github.akarazhev.metaconfig.engine.db;
 
+import com.github.akarazhev.metaconfig.UnitTest;
+import com.github.akarazhev.metaconfig.api.Config;
+import com.github.akarazhev.metaconfig.api.Property;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS_VALUE;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.CONFIG_NAME;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE_TCP;
 
 @DisplayName("Db servers test")
-final class DbServersTest {
+final class DbServersTest extends UnitTest {
+
+    @Test
+    @DisplayName("Db servers constructor")
+    void dbServersConstructor() throws Exception {
+        assertPrivate(DbServers.class);
+    }
+
+    @Test
+    @DisplayName("Start")
+    void start() throws Exception {
+        final DbServer dbServer = DbServers.newServer().start();
+        assertGetSchema();
+        dbServer.stop();
+    }
+
+    @Test
+    @DisplayName("Start with the config")
+    void startWithConfig() throws Exception {
+        final Config config = new Config.Builder(CONFIG_NAME,
+                Arrays.asList(new Property.Builder(TYPE, TYPE_TCP).build(),
+                        new Property.Builder(ARGS, ARGS_VALUE).build())).build();
+
+        final DbServer dbServer = DbServers.newServer(config).start();
+        assertGetSchema();
+        dbServer.stop();
+    }
 }
