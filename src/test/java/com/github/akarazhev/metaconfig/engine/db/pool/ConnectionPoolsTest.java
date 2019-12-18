@@ -10,8 +10,22 @@
  * limitations under the License. */
 package com.github.akarazhev.metaconfig.engine.db.pool;
 
+import com.github.akarazhev.metaconfig.UnitTest;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 @DisplayName("Connection pools test")
-final class ConnectionPoolsTest {
+final class ConnectionPoolsTest extends UnitTest {
+
+    @Test
+    @DisplayName("Connection pools constructor")
+    void connectionPoolsConstructor() throws Exception {
+        assertPrivate(ConnectionPools.class);
+    }
+
+    @Test
+    @DisplayName("Settings constructor")
+    void settingsConstructor() throws Exception {
+        assertPrivate(ConnectionPools.Settings.class);
+    }
 }

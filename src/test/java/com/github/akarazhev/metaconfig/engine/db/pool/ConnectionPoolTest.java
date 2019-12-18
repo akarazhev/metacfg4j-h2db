@@ -11,7 +11,20 @@
 package com.github.akarazhev.metaconfig.engine.db.pool;
 
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DisplayName("Connection pool test")
 final class ConnectionPoolTest {
+
+    @Test
+    @DisplayName("Get data source")
+    void getDataSource() throws IOException {
+        final ConnectionPool connectionPool = ConnectionPools.newPool();
+        assertNotNull(connectionPool.getDataSource());
+        connectionPool.close();
+    }
 }

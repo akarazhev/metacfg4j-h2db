@@ -44,9 +44,8 @@ final class DbServersTest extends UnitTest {
     @Test
     @DisplayName("Start with the config")
     void startWithConfig() throws Exception {
-        final Config config = new Config.Builder(CONFIG_NAME,
-                Arrays.asList(new Property.Builder(TYPE, TYPE_TCP).build(),
-                        new Property.Builder(ARGS, ARGS_VALUE).build())).build();
+        final Config config = new Config.Builder(CONFIG_NAME, Arrays.asList(
+                new Property.Builder(TYPE, TYPE_TCP).build(), new Property.Builder(ARGS, ARGS_VALUE).build())).build();
 
         final DbServer dbServer = DbServers.newServer(config).start();
         assertGetSchema();

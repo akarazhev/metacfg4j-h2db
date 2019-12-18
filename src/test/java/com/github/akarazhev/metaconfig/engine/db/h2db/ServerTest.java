@@ -10,8 +10,56 @@
  * limitations under the License. */
 package com.github.akarazhev.metaconfig.engine.db.h2db;
 
+import com.github.akarazhev.metaconfig.UnitTest;
+import com.github.akarazhev.metaconfig.api.Config;
+import com.github.akarazhev.metaconfig.api.Property;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.sql.SQLException;
+import java.util.Arrays;
+
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS_VALUE;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.CONFIG_NAME;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE_PG;
+import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE_WEB;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 @DisplayName("Server test")
-final class ServerTest {
+final class ServerTest extends UnitTest {
+
+    @Test
+    @DisplayName("Settings constructor")
+    void settingsConstructor() throws Exception {
+        assertPrivate(Server.Settings.class);
+    }
+
+    @Test
+    @DisplayName("Create default server")
+    void createDefaultServer() throws SQLException {
+        final Server server = new Server();
+        assertNotNull(server);
+    }
+
+    @Test
+    @DisplayName("Create pg config server")
+    void createPgConfigServer() throws SQLException {
+        final Config config = new Config.Builder(CONFIG_NAME, Arrays.asList(new Property.Builder(TYPE, TYPE_PG).build(),
+                new Property.Builder(ARGS, ARGS_VALUE).build())).build();
+
+        final Server server = new Server(config);
+        assertNotNull(server);
+    }
+
+    @Test
+    @DisplayName("Create web config server")
+    void createWebConfigServer() throws SQLException {
+        final Config config = new Config.Builder(CONFIG_NAME, Arrays.asList(new Property.Builder(TYPE, TYPE_WEB).build(),
+                new Property.Builder(ARGS, ARGS_VALUE).build())).build();
+
+        final Server server = new Server(config);
+        assertNotNull(server);
+    }
 }
