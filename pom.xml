@@ -15,7 +15,7 @@
     <groupId>com.github.akarazhev.metacfg</groupId>
     <artifactId>metacfg4j-h2db</artifactId>
     <packaging>jar</packaging>
-    <version>1.0</version>
+    <version>1.1</version>
 
     <name>metacfg4j-h2db</name>
     <url>http://akarazhev.github.io/metacfg4j-h2db</url>

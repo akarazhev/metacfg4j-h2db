@@ -30,10 +30,8 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS;
-import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS_VALUE;
 import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.CONFIG_NAME;
 import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE;
-import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE_TCP;
 import static com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPools.Settings.PASSWORD;
 import static com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPools.Settings.URL;
 import static com.github.akarazhev.metaconfig.engine.db.pool.ConnectionPools.Settings.USER;
@@ -50,16 +48,16 @@ final class H2dbMetaConfigTest extends UnitTest {
         if (h2dbMetaConfig == null) {
             final Config dbServer = new Config.Builder(CONFIG_NAME,
                     Arrays.asList(
-                            new Property.Builder(TYPE, TYPE_TCP).build(),
-                            new Property.Builder(ARGS, ARGS_VALUE).build()))
-                    .build();
+                            new Property.Builder(TYPE, "tcp").build(),
+                            new Property.Builder(ARGS, "-tcp", "-tcpPort", "8043", "-ifNotExists").build())
+            ).build();
 
             final Config connectionPool = new Config.Builder(ConnectionPools.Settings.CONFIG_NAME,
                     Arrays.asList(
                             new Property.Builder(URL, "jdbc:h2:tcp://localhost:8043/./data/metacfg4j").build(),
                             new Property.Builder(USER, "sa").build(),
-                            new Property.Builder(PASSWORD, "sa").build())).
-                    build();
+                            new Property.Builder(PASSWORD, "sa").build())
+            ).build();
 
             final Map<String, String> dataMapping = new HashMap<>();
             dataMapping.put(Constants.Mapping.CONFIGS_TABLE, "CONFIGS");

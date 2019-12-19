@@ -19,10 +19,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 
 import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS;
-import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.ARGS_VALUE;
 import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.CONFIG_NAME;
 import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE;
-import static com.github.akarazhev.metaconfig.engine.db.h2db.Server.Settings.TYPE_TCP;
 
 @DisplayName("Db servers test")
 final class DbServersTest extends UnitTest {
@@ -45,7 +43,9 @@ final class DbServersTest extends UnitTest {
     @DisplayName("Start with the config")
     void startWithConfig() throws Exception {
         final Config config = new Config.Builder(CONFIG_NAME, Arrays.asList(
-                new Property.Builder(TYPE, TYPE_TCP).build(), new Property.Builder(ARGS, ARGS_VALUE).build())).build();
+                new Property.Builder(TYPE, "tcp").build(),
+                new Property.Builder(ARGS, "-tcp", "-tcpPort", "8043", "-ifNotExists").build())
+        ).build();
 
         final DbServer dbServer = DbServers.newServer(config).start();
         assertGetSchema();

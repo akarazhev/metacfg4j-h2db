@@ -19,6 +19,7 @@ import com.github.akarazhev.metaconfig.extension.Validator;
 import javax.sql.DataSource;
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -183,12 +184,14 @@ public final class H2dbMetaConfig implements ConfigService, Closeable {
                         ConnectionPools.newPool(poolConfig) :
                         ConnectionPools.newPool();
                 final DataSource dataSource = connectionPool.getDataSource();
+                // Init the data mapping
+                final Map<String, String> mapping = dataMapping != null ? dataMapping : new HashMap<>();
                 // Create the main instance
-                final MetaConfig metaConfig = new MetaConfig.Builder().
-                        webServer(webConfig).
-                        dataMapping(dataMapping).
-                        dataSource(dataSource).
-                        build();
+                final MetaConfig metaConfig = webConfig != null ?
+                        new MetaConfig.Builder().webServer(webConfig).
+                                dataMapping(mapping).dataSource(dataSource).build() :
+                        new MetaConfig.Builder().defaultConfig().
+                                dataMapping(mapping).dataSource(dataSource).build();
                 return new H2dbMetaConfig(dbServer, connectionPool, metaConfig);
             } catch (final Exception e) {
                 throw new RuntimeException(META_CONFIG_ERROR, e);
