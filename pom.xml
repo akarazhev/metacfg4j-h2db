@@ -47,6 +47,18 @@
         </developer>
     </developers>
 
+    <repositories>
+        <repository>
+            <id>metacfg4j</id>
+            <name>GitHub Meta Configuration For Java Apache Maven Packages</name>
+            <url>https://maven.pkg.github.com/akarazhev/metacfg4j</url>
+            <layout>default</layout>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
     <distributionManagement>
         <repository>
             <id>metacfg4j-h2db</id>
